@@ -2,9 +2,9 @@
 #include <vector>
 
 #include "raylib.h"
+#include "raymath.h"
 
-constexpr int SPAWNRADIUS = 20;
-constexpr float PLAYER_NORMAL = 1.0f;
+constexpr int SPAWNRADIUS = 22;
 
 struct Building {
     Vector3 position{};
@@ -15,17 +15,16 @@ struct Building {
     float lineSeparation = 0.001f;
 
     Building(float x, float z, float _width, float _length) {
-        height = GetRandomValue(1000, 3000)/150;
+        height = GetRandomValue(1000, 3000) / 125;
         width = _width;
         length = _length;
         Color neon = {
-            (unsigned char) GetRandomValue(0, 50),
+            25,
             (unsigned char) GetRandomValue(100, 255),
             (unsigned char) GetRandomValue(150, 255),
             255
         };
         color = neon;
-
         position = {x, height / 2.0f, z};
     }
 
@@ -67,11 +66,13 @@ struct Car {
     Vector3 position{};
     CarType type;
     Direction direction;
+    Vector3 vDirection{};
+    std::vector<Vector3> trail{};
     float height = 0.1f;
     float width = 0.5f;
     float length = 0.12f;
     float speed = 0.001f;
-    Color color;
+    Color color{};
 
     void setupType() {
         switch (type) {
@@ -80,7 +81,7 @@ struct Car {
                 width = 0.12f;
                 height = 0.1f;
                 length = 0.5f;
-                color = DARKGRAY;
+                color = GRAY;
                 break;
 
             case SPORT:
@@ -88,7 +89,7 @@ struct Car {
                 width = 0.10f;
                 height = 0.06f;
                 length = 0.5f;
-                color = ORANGE;
+                color = DARKBLUE;
                 break;
 
             case TRUCK:
@@ -104,7 +105,7 @@ struct Car {
                 width = 0.12f;
                 height = 0.2f;
                 length = 0.5f;
-                color = YELLOW;
+                color = ORANGE;
                 break;
         }
     }
@@ -122,21 +123,22 @@ struct Car {
         this->type = CarType(GetRandomValue(0, 3));
         float jitter = ((float) GetRandomValue(-1000, 1000) / 3333.0f);
         this->position = {x + jitter, flyHeight + (jitter / 2), z + jitter};
+        switch (direction) {
+            case NORTH: vDirection = {0,0,-1};
+                break;
+            case SOUTH: vDirection = {0,0,1};
+                break;
+            case EAST: vDirection = {1,0,0};
+                break;
+            case WEST: vDirection = {-1,0,0};
+                break;
+        }
         setupType();
         setupSize();
     }
 
     void move() {
-        switch (direction) {
-            case NORTH: position.z -= speed;
-                break;
-            case SOUTH: position.z += speed;
-                break;
-            case EAST: position.x += speed;
-                break;
-            case WEST: position.x -= speed;
-                break;
-        }
+        position = Vector3Add(position, Vector3Scale(vDirection, speed));
 
         if (position.x < -SPAWNRADIUS) position.x = SPAWNRADIUS;
         if (position.x > SPAWNRADIUS) position.x = -SPAWNRADIUS;
@@ -144,9 +146,8 @@ struct Car {
         if (position.z > SPAWNRADIUS) position.z = -SPAWNRADIUS;
     }
 
-    void draw() const {
+    void draw() {
         DrawCube(position, width, height, length, color);
-
         // Front light
         Vector3 front = position;
 
@@ -155,12 +156,12 @@ struct Car {
         if (direction == EAST) front.x += width / 2;
         if (direction == WEST) front.x -= width / 2;
         Color c = {
-            (unsigned char)GetRandomValue(0, 50),
-            (unsigned char)GetRandomValue(150, 255),
-            (unsigned char)GetRandomValue(200, 255),
-            (unsigned char)(std::ctype_base::alpha * 120)
+            200,
+            200,
+            255,
+            255
         };
-        DrawCube(front, 0.05f, 0.05f, 0.05f, Fade(c, 0.9f));
+        DrawCubeWiresV(front, {0.05f, 0.05f, 0.05f}, Fade(c, 0.9f));
 
         // Rear light
         Vector3 back = position;
@@ -171,21 +172,28 @@ struct Car {
         if (direction == WEST) back.x += width / 2;
 
         c = {
-            (unsigned char)GetRandomValue(200, 255),
-            (unsigned char)GetRandomValue(0, 50),
-            (unsigned char)GetRandomValue(150, 255),
-            (unsigned char)(std::ctype_base::alpha * 120)
+            255,
+            50,
+            50,
+            120
         };
-        DrawCube(back, 0.05f, 0.05f, 0.05f, Fade(c, 0.9f));
+        DrawCubeWiresV(back, {0.05f, 0.05f, 0.05f}, Fade(c, 0.9f));
+
+        trail.push_back(back);
+
+        if (trail.size() > 5)
+            trail.erase(trail.begin());
+
+
+        for (int i = 1; i < trail.size(); i++) {
+            float t = (float) trail.size() / (float) i;
+            float size = 0.1f - i / 100;
+            DrawCubeWiresV(trail[i], {size, size, size}, Fade(c, t));
+        }
     }
 };
 
-
 constexpr int STREET_SPACING = 4;
-
-bool isBuilding(int x, int z) {
-    return (x % STREET_SPACING == 0) && (z % STREET_SPACING == 0);
-}
 
 void generateWorld(std::vector<Building> &buildings,
                    std::vector<Car> &cars) {
@@ -194,47 +202,50 @@ void generateWorld(std::vector<Building> &buildings,
 
     for (int x = -SPAWNRADIUS; x < SPAWNRADIUS; x += 2) {
         for (int z = -SPAWNRADIUS; z < SPAWNRADIUS; z += 2) {
-            bool _isBuilding = isBuilding(x, z);
-
-            if (_isBuilding) {
-                buildings.push_back(Building(x, z, 2, 2));
+            bool skipBuilding = GetRandomValue(0, 5) == 0;
+            bool skipVehicle = GetRandomValue(0, 1) == 0;
+            if ((x % STREET_SPACING == 0) && (z % STREET_SPACING == 0)) {
+                if (skipBuilding) continue;
+                buildings.emplace_back(x, z, 2, 2);
                 continue;
             }
+            if (skipVehicle) continue;
 
             bool streetX = (x % STREET_SPACING != 0);
             bool streetZ = (z % STREET_SPACING != 0);
-
-            float flyHeightLow = 1.0f;
-            float flyHeightMid = 2.2f;
+            float laneOffsetNorthSouth = 1.0f;
+            float laneOffsetEastWest = -1.0f;
+            float flyHeightLow = 1.2f;
+            float flyHeightMid = 4.4f;
             float flyHeightHigh = 12.0f;
 
             // NORTH SOUTH
             if (streetX) {
                 // LEFT OUTER AND INNER LANE
-                cars.push_back(Car(NORTH, x - laneOffsetInner, flyHeightLow, z));
-                cars.push_back(Car(SOUTH, x - laneOffsetOuter, flyHeightLow, z));
+                cars.emplace_back(NORTH, x - laneOffsetInner, flyHeightLow + laneOffsetNorthSouth, z);
+                cars.emplace_back(SOUTH, x - laneOffsetOuter, flyHeightLow + laneOffsetNorthSouth, z);
                 // RIGHT OUTER AND INNER LANE
-                cars.push_back(Car(SOUTH, x + laneOffsetInner, flyHeightLow, z));
-                cars.push_back(Car(NORTH, x + laneOffsetOuter, flyHeightLow, z));
+                cars.emplace_back(SOUTH, x + laneOffsetInner, flyHeightLow + laneOffsetNorthSouth, z);
+                cars.emplace_back(NORTH, x + laneOffsetOuter, flyHeightLow + laneOffsetNorthSouth, z);
 
                 // JUST INNER LANE FOR VERY HIGH HIGHWAY
-                cars.push_back(Car(SOUTH, x + laneOffsetInner, flyHeightHigh, z));
-                cars.push_back(Car(NORTH, x - laneOffsetInner, flyHeightHigh, z));
+                cars.emplace_back(SOUTH, x + laneOffsetInner, flyHeightHigh + laneOffsetNorthSouth, z);
+                cars.emplace_back(NORTH, x - laneOffsetInner, flyHeightHigh + laneOffsetNorthSouth, z);
                 continue;
             }
 
             // EAST WEST
             if (streetZ) {
                 // LEFT OUTER AND INNER LANE
-                cars.push_back(Car(EAST, x, flyHeightMid, z - laneOffsetInner));
-                cars.push_back(Car(WEST, x, flyHeightMid, z - laneOffsetOuter));
+                cars.emplace_back(EAST, x, flyHeightMid + laneOffsetEastWest, z - laneOffsetInner);
+                cars.emplace_back(WEST, x, flyHeightMid + laneOffsetEastWest, z - laneOffsetOuter);
                 // RIGHT OUTER AND INNER LANE
-                cars.push_back(Car(WEST, x, flyHeightMid, z + laneOffsetInner));
-                cars.push_back(Car(EAST, x, flyHeightMid, z + laneOffsetOuter));
+                cars.emplace_back(WEST, x, flyHeightMid + laneOffsetEastWest, z + laneOffsetInner);
+                cars.emplace_back(EAST, x, flyHeightMid + laneOffsetEastWest, z + laneOffsetOuter);
 
                 // JUST INNER LANE FOR VERY HIGH HIGHWAY
-                cars.push_back(Car(EAST, x, flyHeightHigh, z - laneOffsetInner));
-                cars.push_back(Car(WEST, x, flyHeightHigh, z + laneOffsetInner));
+                cars.emplace_back(EAST, x, flyHeightHigh + laneOffsetEastWest, z - laneOffsetInner);
+                cars.emplace_back(WEST, x, flyHeightHigh + laneOffsetEastWest, z + laneOffsetInner);
             }
         }
     }
@@ -244,13 +255,13 @@ int main() {
     std::vector<Car> cars;
     std::vector<Building> buildings;
     generateWorld(buildings, cars);
-int screenWidth = 1200;
+    int screenWidth = 1200;
     int screenHeight = 1024;
     InitWindow(screenWidth, screenHeight, "Night City");
 
     Camera3D camera = {0};
-    camera.position = {2.0f, 20, 20.0f};
-    camera.target = {2.0f, PLAYER_NORMAL, 0.0f};
+    camera.position = {2.0f, 40.0f, 40.0f};
+    camera.target = {0.0f, 10, 0.0f};
     camera.up = {0.0f, 1.0f, 0.0f};
     camera.fovy = 70.0f;
     camera.projection = CAMERA_PERSPECTIVE;
@@ -259,37 +270,24 @@ int screenWidth = 1200;
     SetTargetFPS(144);
 
     while (!WindowShouldClose()) {
-        if (IsKeyDown(KEY_LEFT_SHIFT)) {
-            camera.position.y++;
-            camera.target.y++;
-        }
-        if (IsKeyDown(KEY_LEFT_CONTROL)) {
-            camera.position.y--;
-            camera.target.y--;
-            if (camera.position.y <= PLAYER_NORMAL) {
-                camera.position.y = PLAYER_NORMAL;
-                camera.target.y = PLAYER_NORMAL;
-            }
-        }
         UpdateCamera(&camera, CAMERA_ORBITAL);
         BeginDrawing();
         ClearBackground(BLACK);
-        BeginMode3D(camera);
-
-        DrawPlane({0, 0, 0}, {200, 200}, Color{20, 20, 20, 255});
+        DrawPlane({0, 0, 0}, {150, 150}, Color{0, 0, 10, 255});
 
         for (auto &car: cars) {
             car.move();
+        }
+        BeginMode3D(camera);
+        for (auto &car: cars) {
             car.draw();
         }
         for (auto &building: buildings) {
             building.draw();
         }
-
         EndMode3D();
 
         DrawFPS(10, 10);
-
         EndDrawing();
     }
 
