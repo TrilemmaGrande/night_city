@@ -89,3 +89,6 @@ fabric.properties
 /particles.iml
 /misc.xml
 /.idea/.gitignore
+/build-web/
+/cmake-build-debug/
+/emsdk/
