@@ -16,7 +16,7 @@ class Building {
     float lineSeparation = 0.001f;
 
 public:
-    Building(float x, float z, float _width, float _length);
+    Building(float x, float z, float width, float length);
 
     void draw() const;
 };

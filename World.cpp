@@ -14,20 +14,19 @@ Camera3D World::initCamera() {
     camera.projection = CAMERA_PERSPECTIVE;
     return camera;
 }
+
 void World::generateWorld(std::vector<Building> &buildings,
                           std::vector<Car> &cars,
-                          const Config& cfg)
-{
-    float laneOffsetOuter = cfg.laneOffsetOuter;
-    float laneOffsetInner = cfg.laneOffsetInner;
-    int streetSpacing = cfg.streetSpacing;
-    int spawnRadius = cfg.spawnRadius;
+                          const Config &cfg) {
+    const float laneOffsetOuter = cfg.laneOffsetOuter;
+    const float laneOffsetInner = cfg.laneOffsetInner;
+    const int streetSpacing = cfg.streetSpacing;
+    const int spawnRadius = cfg.spawnRadius;
 
     for (int x = -spawnRadius; x < spawnRadius; x += 2) {
         for (int z = -spawnRadius; z < spawnRadius; z += 2) {
-
-            bool skipBuilding = GetRandomValue(0, 5) == 0;
-            bool skipVehicle = GetRandomValue(0, 1) == 0;
+            const bool skipBuilding = GetRandomValue(0, 5) == 0;
+            const bool skipVehicle = GetRandomValue(0, 1) == 0;
 
             if ((x % streetSpacing == 0) && (z % streetSpacing == 0)) {
                 if (skipBuilding) continue;
@@ -37,14 +36,13 @@ void World::generateWorld(std::vector<Building> &buildings,
 
             if (skipVehicle) continue;
 
-            bool streetX = (x % streetSpacing != 0);
-            bool streetZ = (z % streetSpacing != 0);
-            float laneOffsetNorthSouth = 1.0f;
-            float laneOffsetEastWest = -1.0f;
-            float flyHeightLow = 1.2f;
-            float flyHeightMid = 4.4f;
-            float flyHeightHigh = 12.0f;
-
+            const bool streetX = (x % streetSpacing != 0);
+            const bool streetZ = (z % streetSpacing != 0);
+            constexpr float flyHeightHigh = 12.0f;
+            constexpr float flyHeightMid = 4.4f;
+            constexpr float flyHeightLow = 1.2f;
+            constexpr float laneOffsetNorthSouth = 1.0f;
+            constexpr float laneOffsetEastWest = -1.0f;
 
             // NORTH SOUTH
             if (streetX) {

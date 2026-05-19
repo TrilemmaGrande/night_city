@@ -6,10 +6,8 @@
 
 #include <raylib.h>
 #include <raymath.h>
-#include <bits/exception_ptr.h>
 
-Car::Car(const Direction direction, const float x, const float flyHeight, const float z) {
-    this->direction = direction;
+Car::Car(const Direction direction, const float x, const float flyHeight, const float z): direction(direction) {
     this->type = static_cast<CarType>(GetRandomValue(0, 3));
     const float jitter = static_cast<float>(GetRandomValue(-1000, 1000)) / 3333.0f;
     this->position = {x + jitter, flyHeight + (jitter / 2), z + jitter};
@@ -114,6 +112,5 @@ void Car::draw() const {
     DrawCube(position, width, height, length, color);
     DrawCubeWiresV(front, {0.05f, 0.05f, 0.05f}, frontColor);
     DrawCubeWiresV(rear, {0.05f, 0.05f, 0.05f}, rearColor);
-    DrawLine3D( position, trailPos, rearColor
-    );
+    DrawLine3D(position, trailPos, rearColor);
 }

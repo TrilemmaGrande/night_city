@@ -4,14 +4,12 @@
 
 #include "Building.h"
 
-Building::Building(float x, float z, float _width, float _length) {
+Building::Building(float x, float z, float width, float length) : width(width), length(length) {
     height = GetRandomValue(1000, 3000) / 125;
-    width = _width;
-    length = _length;
-    Color neon = {
+    const Color neon = {
         25,
-        (unsigned char) GetRandomValue(100, 255),
-        (unsigned char) GetRandomValue(150, 255),
+        static_cast<unsigned char>(GetRandomValue(100, 255)),
+        static_cast<unsigned char>(GetRandomValue(150, 255)),
         255
     };
     color = neon;
