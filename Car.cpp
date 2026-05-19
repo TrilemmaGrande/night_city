@@ -6,12 +6,26 @@
 
 #include <raylib.h>
 #include <raymath.h>
+#include <bits/exception_ptr.h>
 
 Car::Car(const Direction direction, const float x, const float flyHeight, const float z) {
     this->direction = direction;
-    this->type = CarType(GetRandomValue(0, 3));
-    float jitter = ((float) GetRandomValue(-1000, 1000) / 3333.0f);
+    this->type = static_cast<CarType>(GetRandomValue(0, 3));
+    const float jitter = static_cast<float>(GetRandomValue(-1000, 1000)) / 3333.0f;
     this->position = {x + jitter, flyHeight + (jitter / 2), z + jitter};
+    this->frontColor = {
+        200,
+        200,
+        255,
+        255
+    };
+    this->rearColor = {
+        255,
+        50,
+        50,
+        120
+    };
+
     switch (direction) {
         case NORTH: vDirection = {0, 0, -1};
             break;
@@ -25,6 +39,7 @@ Car::Car(const Direction direction, const float x, const float flyHeight, const 
     setupType();
     setupSize();
 }
+
 void Car::setupType() {
     switch (type) {
         case NORMAL:
@@ -63,64 +78,42 @@ void Car::setupType() {
 
 void Car::setupSize() {
     if (direction == EAST || direction == WEST) {
-        float s = width;
-        width = length;
-        length = s;
+        std::swap(width, length);
     }
 }
 
 
-void Car::move(int &radius) {
+void Car::move(const int &radius) {
     position = Vector3Add(position, Vector3Scale(vDirection, speed));
 
     if (position.x < -radius) position.x = radius;
     if (position.x > radius) position.x = -radius;
     if (position.z < -radius) position.z = radius;
     if (position.z > radius) position.z = -radius;
-}
 
-void Car::draw() {
-    DrawCube(position, width, height, length, color);
-    // Front light
-    Vector3 front = position;
-
+    front = position;
     if (direction == NORTH) front.z -= length / 2;
     if (direction == SOUTH) front.z += length / 2;
     if (direction == EAST) front.x += width / 2;
     if (direction == WEST) front.x -= width / 2;
-    Color c = {
-        200,
-        200,
-        255,
-        255
+
+    rear = position;
+    if (direction == NORTH) { rear.z += length / 2; }
+    if (direction == SOUTH) { rear.z -= length / 2; }
+    if (direction == EAST) { rear.x -= width / 2; }
+    if (direction == WEST) { rear.x += width / 2; }
+
+    trailPos = {
+        rear.x - vDirection.x * speed * 15,
+        rear.y - vDirection.y * speed * 15,
+        rear.z - vDirection.z * speed * 15
     };
-    DrawCubeWiresV(front, {0.05f, 0.05f, 0.05f}, Fade(c, 0.9f));
+}
 
-    // Rear light
-    Vector3 back = position;
-
-    if (direction == NORTH) back.z += length / 2;
-    if (direction == SOUTH) back.z -= length / 2;
-    if (direction == EAST) back.x -= width / 2;
-    if (direction == WEST) back.x += width / 2;
-
-    c = {
-        255,
-        50,
-        50,
-        120
-    };
-    DrawCubeWiresV(back, {0.05f, 0.05f, 0.05f}, Fade(c, 0.9f));
-
-    trail.push_back(back);
-
-    if (trail.size() > 5)
-        trail.erase(trail.begin());
-
-
-    for (int i = 1; i < trail.size(); i++) {
-        float t = (float) trail.size() / (float) i;
-        float size = 0.1f - i / 100;
-        DrawCubeWiresV(trail[i], {size, size, size}, Fade(c, t));
-    }
+void Car::draw() const {
+    DrawCube(position, width, height, length, color);
+    DrawCubeWiresV(front, {0.05f, 0.05f, 0.05f}, frontColor);
+    DrawCubeWiresV(rear, {0.05f, 0.05f, 0.05f}, rearColor);
+    DrawLine3D( position, trailPos, rearColor
+    );
 }
