@@ -76,8 +76,8 @@ void Car::setupType() {
 void Car::setupSize() {
     if (direction == EAST || direction == WEST) {
         auto const tmp = width;
-        width = height;
-        height = tmp;
+        width = length;
+        length = tmp;
     }
 }
 
