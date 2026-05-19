@@ -3,7 +3,6 @@
 //
 
 #include "Car.h"
-
 #include <raylib.h>
 #include <raymath.h>
 
@@ -76,7 +75,9 @@ void Car::setupType() {
 
 void Car::setupSize() {
     if (direction == EAST || direction == WEST) {
-        std::swap(width, length);
+        auto const tmp = width;
+        width = height;
+        height = tmp;
     }
 }
 
