@@ -21,7 +21,7 @@ int main() {
 
     while (!WindowShouldClose()) {
         for (auto &car: cars) {
-            car.move(cfg.spawnRadius);
+            car.move(cfg.gridRange);
         }
         UpdateCamera(&camera, CAMERA_ORBITAL);
         BeginDrawing();

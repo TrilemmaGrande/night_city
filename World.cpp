@@ -21,10 +21,10 @@ void World::generateWorld(std::vector<Building> &buildings,
     const float laneOffsetOuter = cfg.laneOffsetOuter;
     const float laneOffsetInner = cfg.laneOffsetInner;
     const int streetSpacing = cfg.streetSpacing;
-    const int spawnRadius = cfg.spawnRadius;
+    const int gridRange = cfg.gridRange;
 
-    for (int x = -spawnRadius; x < spawnRadius; x += 2) {
-        for (int z = -spawnRadius; z < spawnRadius; z += 2) {
+    for (int x = -gridRange; x <= gridRange; x += 2) {
+        for (int z = -gridRange; z <= gridRange; z += 2) {
             const bool skipBuilding = GetRandomValue(0, 5) == 0;
             const bool skipVehicle = GetRandomValue(0, 1) == 0;
 

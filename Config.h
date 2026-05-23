@@ -8,7 +8,7 @@
 
 class Config {
 public:
-    int spawnRadius = 20;
+    int gridRange = 20;
     float carSpeed = 0.001;
     int streetSpacing = 4;
     float laneOffsetOuter = 0.5f;
