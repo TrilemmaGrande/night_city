@@ -16,7 +16,7 @@ void Config::loadConfig() {
     std::string key;
 
     while (f >> key) {
-        if (key == "SPAWNRADIUS") f >> spawnRadius;
+        if (key == "GRIDRANGE") f >> gridRange;
         else if (key == "SPEED") f >> carSpeed;
         else if (key == "STREETSPACING") f >> streetSpacing;
         else if (key == "LANEOFFSETOUTER") f >> laneOffsetOuter;
