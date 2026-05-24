@@ -11,11 +11,11 @@ int main() {
     cfg.loadConfig();
     std::vector<Car> cars;
     std::vector<Building> buildings;
-    World::generateWorld(buildings, cars, cfg);
     Camera3D camera = World::initCamera();
     constexpr int screenWidth = 1200;
     constexpr int screenHeight = 1024;
     InitWindow(screenWidth, screenHeight, "Night City");
+    World::GenerateWorld(buildings, cars, cfg);
     DisableCursor();
     SetTargetFPS(144);
 

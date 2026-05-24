@@ -4,7 +4,7 @@
 
 #include "Building.h"
 
-Building::Building(float x, float z, float width, float length) : width(width), length(length) {
+Building::Building(float x, float z, float width, float length, Model model) : width(width), length(length), model(model) {
     height = GetRandomValue(1000, 3000) / 125;
     const Color neon = {
         25,
@@ -17,23 +17,14 @@ Building::Building(float x, float z, float width, float length) : width(width), 
 }
 
 void Building::draw() const {
-    DrawCubeV(
-        position,
-        {
-            width,
-            height,
-            length
-        },
-        BLACK
-    );
-
-    DrawCubeWiresV(
-        position,
-        {
-            width + lineSeparation,
-            height + lineSeparation,
-            length + lineSeparation
-        },
-        color
+    DrawModelEx(model,
+                position,
+                {0, 1, 0}, 0,
+                {
+                    width,
+                    height,
+                    length
+                },
+                WHITE
     );
 }

@@ -15,7 +15,9 @@ class World {
 public:
     static Camera3D initCamera();
 
-    static void generateWorld(std::vector<Building> &buildings, std::vector<Car> &cars, const Config &cfg);
+    static Texture2D LoadTexture();
+
+    static void GenerateWorld(std::vector<Building> &buildings, std::vector<Car> &cars, const Config &cfg);
 };
 
 

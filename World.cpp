@@ -4,6 +4,7 @@
 
 #include "World.h"
 #include "Config.h"
+#include "cmake-build-debug/_deps/raylib-src/src/raymath.h"
 
 Camera3D World::initCamera() {
     Camera3D camera = {0};
@@ -15,22 +16,64 @@ Camera3D World::initCamera() {
     return camera;
 }
 
-void World::generateWorld(std::vector<Building> &buildings,
+Texture2D World::LoadTexture() {
+    Image img = GenImageColor(128, 128, BLACK);
+
+    const int windowW = 4;
+    const int windowH = 2;
+
+    const int gridX = 10;
+    const int gridY = 16;
+
+    for (int y = 0; y < gridY; y++) {
+        for (int x = 0; x < gridX; x++) {
+
+            bool on = GetRandomValue(0, 100) > 75;
+
+            if (on) {
+                int px = x * (128 / gridX);
+                int py = y * (128 / gridY);
+
+                ImageDrawRectangle(
+                    &img,
+                    px,
+                    py,
+                    windowW,
+                    windowH/6,
+                    Color{
+                        220,
+                        (unsigned char)GetRandomValue(200, 220),
+                        (unsigned char)GetRandomValue(160, 220),
+                        220
+                    }
+                );
+            }
+        }
+    }
+
+    return LoadTextureFromImage(img);
+}
+
+void World::GenerateWorld(std::vector<Building> &buildings,
                           std::vector<Car> &cars,
                           const Config &cfg) {
     const float laneOffsetOuter = cfg.laneOffsetOuter;
     const float laneOffsetInner = cfg.laneOffsetInner;
     const int streetSpacing = cfg.streetSpacing;
     const int gridRange = cfg.gridRange;
-
     for (int x = -gridRange; x <= gridRange; x += 2) {
         for (int z = -gridRange; z <= gridRange; z += 2) {
-            const bool skipBuilding = GetRandomValue(0, 5) == 0;
+            const bool skipBuilding = GetRandomValue(0, 10) == 0;
             const bool skipVehicle = GetRandomValue(0, 1) == 0;
 
             if ((x % streetSpacing == 0) && (z % streetSpacing == 0)) {
                 if (skipBuilding) continue;
-                buildings.emplace_back(x, z, 2, 2);
+                Texture2D texture = LoadTexture();
+                SetTextureFilter(texture, TEXTURE_FILTER_POINT);
+                Mesh cubeMesh = GenMeshCube(1.0f, 1.0f, 1.0f);
+                Model model = LoadModelFromMesh(cubeMesh);
+                model.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = texture;
+                buildings.emplace_back(x, z, 2, 2, model);
                 continue;
             }
 
